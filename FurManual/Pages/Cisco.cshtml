@@ -1,0 +1,735 @@
+﻿@page
+@model FurManual.Pages.CiscoModel
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Cisco Simulator";
+    var jsonTasks = JsonSerializer.Serialize(Model.Tasks);
+}
+
+<style>
+    /* --- СТИЛИ КАЛЬКУЛЯТОРА CISCO --- */
+    .calc-disclosure {
+        background: var(--bg-secondary, #ffffff);
+        border-radius: 16px;
+        border: 1px solid rgba(102, 126, 234, 0.3);
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        overflow: hidden;
+    }
+
+    .calc-summary {
+        padding: 1.2rem 1.5rem;
+        cursor: pointer;
+        font-weight: 600;
+        color: var(--accent-primary, #4f46e5);
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        transition: background 0.2s;
+        font-size: 1.1rem;
+    }
+
+        .calc-summary:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .calc-summary::-webkit-details-marker {
+            display: none;
+        }
+
+    .calc-panel-body {
+        padding: 1.5rem 2rem 2rem 2rem;
+        border-top: 1px solid rgba(0,0,0,0.05);
+        background: #fafbff;
+    }
+
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin: 1rem 0;
+        cursor: pointer;
+        user-select: none;
+    }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-primary, #4f46e5);
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            color: var(--text-primary);
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+    .calc-results {
+        margin-top: 1.5rem;
+        padding: 1.5rem;
+        background: #ffffff;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        display: none;
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+        .calc-results.active {
+            display: block;
+        }
+
+    .results-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .result-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+
+    .result-label {
+        font-size: 0.85rem;
+        color: var(--text-secondary, #64748b);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .result-value {
+        font-size: 1.15rem;
+        color: var(--text-primary, #1f2937);
+        font-family: 'Courier New', Courier, monospace;
+        font-weight: 700;
+    }
+
+    .binary-val {
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 0.9rem;
+        display: none;
+        margin-top: 2px;
+        background: #f1f5f9;
+        padding: 4px 8px;
+        border-radius: 6px;
+        word-break: break-all;
+    }
+
+    .bin-net {
+        color: var(--accent-primary, #4f46e5);
+        font-weight: 700;
+    }
+
+    .bin-host {
+        color: #94a3b8;
+    }
+
+    .calc-error {
+        color: #e74c3c;
+        font-size: 0.9rem;
+        margin-top: 1rem;
+        font-weight: 500;
+        display: none;
+    }
+</style>
+
+<style>
+    /* --- МОДАЛЬНЫЕ ОКНА (ОБЩИЕ СТИЛИ) --- */
+    .custom-modal {
+        position: fixed !important;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 10000 !important;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(2px);
+    }
+
+    .modal-content {
+        background: white;
+        width: 90%;
+        max-width: 350px;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        max-height: 80vh;
+    }
+
+    @@keyframes popIn {
+        from
+
+    {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    }
+
+    .modal-header {
+        padding: 1rem 1.5rem;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        font-weight: 700;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--text-primary);
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+        overflow-y: auto;
+    }
+
+    .modal-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.8rem;
+    }
+
+    /* --- СПЕЦИФИКА ДЛЯ ПОРТОВ --- */
+    .port-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .port-item {
+        padding: 0.8rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: 0.2s;
+    }
+
+        .port-item:active {
+            background: #f1f5f9;
+            transform: scale(0.98);
+        }
+
+        .port-item.used {
+            background: #f8fafc;
+            color: #94a3b8;
+            cursor: not-allowed;
+            border-color: #f1f5f9;
+        }
+
+    .led-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+
+    .led-free {
+        background: #22c55e;
+        box-shadow: 0 0 5px #22c55e;
+    }
+
+    .led-busy {
+        background: #ef4444;
+    }
+
+    /* --- ОСНОВНАЯ СЕТКА --- */
+    .cisco-container {
+        display: grid;
+        grid-template-columns: 280px 1fr 320px;
+        grid-template-rows: 80px 1fr auto;
+        min-height: calc(100vh - 80px);
+        gap: 1rem;
+        max-width: 1920px;
+        margin: 0 auto;
+        padding: 1rem;
+        user-select: none;
+        font-family: 'Segoe UI', sans-serif;
+        position: relative;
+    }
+
+    .panel {
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        border: 1px solid rgba(0,0,0,0.08);
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* ЗАДАНИЯ */
+    .tasks-panel {
+        grid-row: 1 / 4;
+        grid-column: 1 / 2;
+        overflow: hidden;
+    }
+
+    .mobile-tasks-details {
+        display: none;
+    }
+
+    .chapter-title {
+        padding: 0.8rem 1rem;
+        background: #f1f5f9;
+        font-weight: 700;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+
+    .task-item {
+        padding: 0.8rem 1rem;
+        border-bottom: 1px solid rgba(0,0,0,0.03);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        transition: 0.2s;
+    }
+
+        .task-item:hover {
+            background: #f8fafc;
+        }
+
+        .task-item.active {
+            background: #e0e7ff;
+            border-left: 4px solid var(--accent-primary);
+        }
+
+    .status-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #cbd5e1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 10px;
+        flex-shrink: 0;
+    }
+
+        .status-dot.completed {
+            background: #22c55e;
+        }
+
+            .status-dot.completed::after {
+                content: '✓';
+            }
+
+    /* ТУЛБАР */
+    .toolbar-panel {
+        grid-row: 1 / 2;
+        grid-column: 2 / 4;
+        flex-direction: row;
+        align-items: center;
+        padding: 0 1rem;
+        gap: 1.5rem;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .tool-group {
+        display: flex;
+        gap: 1rem;
+        padding-right: 1.5rem;
+        border-right: 1px solid #e2e8f0;
+        align-items: center;
+    }
+
+    .device-tool, .action-tool {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 8px;
+        transition: 0.2s;
+        min-width: 60px;
+        border: 1px solid transparent;
+        touch-action: pan-x;
+        margin: 0 2px;
+        position: relative;
+    }
+
+        .device-tool:hover, .action-tool:hover {
+            background: #f1f5f9;
+        }
+
+        .action-tool.active {
+            background: #dbeafe;
+            border-color: #3b82f6;
+            color: #1e40af;
+        }
+
+        .action-tool.delete-mode.active {
+            background: #fee2e2;
+            border-color: #ef4444;
+            color: #991b1b;
+        }
+
+    .tool-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-top: 4px;
+    }
+
+    .device-tool.pressing {
+        background: #e0e7ff;
+        transform: scale(0.95);
+        border: 2px solid var(--accent-primary);
+    }
+
+    /* РАБОЧАЯ ОБЛАСТЬ */
+    .workspace-panel {
+        grid-row: 2 / 3;
+        grid-column: 2 / 4;
+        background: #f8fafc;
+        position: relative;
+        overflow: hidden;
+        background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+        background-size: 24px 24px;
+        touch-action: none;
+        border-radius: 12px;
+    }
+
+    .network-node {
+        position: absolute;
+        width: 70px;
+        height: 70px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: grab;
+        z-index: 10;
+        touch-action: none;
+    }
+
+        .network-node:hover {
+            filter: drop-shadow(0 0 5px rgba(0,0,0,0.1));
+        }
+
+    .node-label {
+        margin-top: 4px;
+        font-size: 0.75rem;
+        background: rgba(255,255,255,0.9);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 600;
+        pointer-events: none;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    .node-ip {
+        font-size: 0.65rem;
+        color: #059669;
+        background: rgba(255,255,255,0.9);
+        padding: 0 4px;
+        border-radius: 2px;
+        margin-top: 2px;
+        font-family: monospace;
+    }
+
+    .link-status {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #ef4444;
+        border: 1px solid white;
+        z-index: 15;
+    }
+
+        .link-status.up {
+            background: #22c55e;
+            box-shadow: 0 0 5px #22c55e;
+        }
+
+    .connections-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 5;
+    }
+
+    .cable-line {
+        stroke-width: 4;
+        stroke-linecap: round;
+        cursor: pointer;
+        pointer-events: auto;
+    }
+
+        .cable-line:hover {
+            stroke-width: 6;
+            opacity: 0.8;
+        }
+
+    .cable-straight {
+        stroke: #1e293b;
+    }
+
+    .cable-cross {
+        stroke: #1e293b;
+        stroke-dasharray: 10, 5;
+    }
+
+    .packet {
+        position: absolute;
+        width: 16px;
+        height: 12px;
+        background: #8b5cf6;
+        border-radius: 2px;
+        border: 1px solid white;
+        z-index: 20;
+        display: none;
+        box-shadow: 0 0 5px #8b5cf6;
+    }
+
+    /* ПАНЕЛЬ ЗАДАНИЯ */
+    .mascot-panel {
+        grid-row: 3 / 4;
+        grid-column: 2 / 4;
+        flex-direction: column;
+        border: 2px solid var(--accent-primary);
+        background: linear-gradient(135deg, #fff 0%, #f1f5f9 100%);
+        min-height: auto;
+    }
+
+    .mascot-dialog {
+        flex-grow: 1;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .btn-check {
+        background: #22c55e;
+        color: white;
+        border: none;
+        padding: 0.6rem 2rem;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 0.5rem;
+        width: 100%;
+    }
+
+    /* POPUP МАСКОТ */
+    .mascot-overlay {
+        position: absolute;
+        bottom: 0;
+        right: 2%;
+        z-index: 100;
+        display: flex;
+        align-items: flex-end;
+        pointer-events: none;
+        transform: translateY(100%);
+        transition: transform 0.3s;
+        width: clamp(120px, 20%, 250px);
+    }
+
+        .mascot-overlay.show {
+            transform: translateY(0);
+        }
+
+    .mascot-img-popup {
+        width: 100%;
+        height: auto;
+        filter: drop-shadow(-5px -5px 10px rgba(0,0,0,0.1));
+        cursor: pointer;
+        pointer-events: auto;
+    }
+
+    .mascot-bubble {
+        position: absolute;
+        bottom: 90%;
+        right: 40%;
+        background: white;
+        padding: 1rem;
+        border-radius: 12px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        border: 2px solid var(--bubble-color, var(--accent-primary, #4f46e5));
+        color: #334155;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        width: 220px;
+        pointer-events: auto;
+        opacity: 0;
+        transform: scale(0.8);
+        transition: all 0.3s ease;
+    }
+
+    .mascot-overlay.show .mascot-bubble {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .mascot-bubble::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        right: 25px;
+        width: 16px;
+        height: 16px;
+        background: white;
+        border-bottom: 2px solid var(--bubble-color, var(--accent-primary, #4f46e5));
+        border-right: 2px solid var(--bubble-color, var(--accent-primary, #4f46e5));
+        transform: rotate(45deg);
+    }
+
+    .config-form label {
+        display: block;
+        font-size: 0.8rem;
+        color: #64748b;
+        margin-bottom: 6px;
+        font-weight: 500;
+    }
+
+    .config-form input {
+        width: 100%;
+        padding: 0.8rem;
+        margin-bottom: 1.2rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 16px;
+    }
+
+    .btn-save {
+        background: #3b82f6;
+        color: white;
+        border: none;
+        padding: 0.8rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-cancel {
+        background: #f1f5f9;
+        color: #475569;
+        border: none;
+        padding: 0.8rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    /* АДАПТИВ */
+    @@media (max-width: 1024px) {
+        .cisco-container {
+            display: flex;
+            flex-direction: column;
+            height: auto;
+            min-height: 100vh;
+            padding: 0.5rem;
+        }
+
+        .tasks-panel {
+            display: none;
+        }
+
+        .mobile-tasks-details {
+            display: block;
+            margin-bottom: 0.5rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid rgba(0,0,0,0.08);
+        }
+
+        .mobile-summary {
+            padding: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+            .mobile-summary::after {
+                content: '▼';
+                font-size: 0.8rem;
+            }
+
+        details[open] .mobile-summary::after {
+            content: '▲';
+        }
+
+        .mobile-task-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border-top: 1px solid #eee;
+        }
+
+        .toolbar-panel {
+            padding: 0.5rem;
+            gap: 0.5rem;
+        }
+
+        .tool-group {
+            padding-right: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .workspace-panel {
+            height: 60vh;
+            border-radius: 12px;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .mascot-panel {
+            flex-grow: 0;
+            margin-bottom: 1rem;
+        }
+
+        .mascot-dialog {
+            padding: 0.8rem;
+        }
+    }
+</style>
+
+<svg style="display: none;">
+    <symbol id="icon-pc" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></symbol>
+    <symbol id="icon-switch" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="6" cy="12" r="1" fill="currentColor"></circle><circle cx="10" cy="12" r="1" fill="currentColor"></circle><circle cx="14" cy="12" r="1" fill="currentColor"></circle><circle cx="18" cy="12" r="1" fill="currentColor"></circle></symbol>
+    <symbol id="icon-router" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><line x1="12" y1="2" x2="12" y2="22"></line><path d="M4.93 4.93l14.14 14.14"></path><path d="M4.93 19.07l14.14-14.14"></path></symbol>
+    <symbol id="icon-cable-straight" viewBox="0 0 24 24"><line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" stroke-width="2"></line></symbol>
+    <symbol id="icon-cable-cross" viewBox="0 0 24 24"><line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" stroke-width="2" stroke-dasharray="4 2"></line></symbol>
+    <symbol id="icon-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></symbol>
+    <symbol id="icon-ping" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></symbol>
+</svg>
+
+
+
+<!-- СВОРАЧИВАЕМЫЙ КАЛЬКУЛЯТОР CISCO -->
+<div id="subnetCalculator"></div>
+
+<div id="ciscoSimulator"></div>
+<script id="ciscoTasksJson" type="application/json">@Html.Raw(jsonTasks)</script>
+
+
+
+@section Scripts {
+    <script type="module" src="~/js/dist/subnet-calculator.js" asp-append-version="true"></script>
+    <script type="module" src="~/js/dist/cisco-simulator.js" asp-append-version="true"></script>
+}

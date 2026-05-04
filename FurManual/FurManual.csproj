@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <DefaultItemExcludes>$(DefaultItemExcludes);node_modules\**;src\**</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="Styles\site.css" />
+    <Content Include="Styles\site.min.css" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
+    <PackageReference Include="BuildBundlerMinifier" Version="3.2.449" />
+    <PackageReference Include="HtmlSanitizer" Version="9.0.892" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.13" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Npgsql" Version="10.0.1" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+    <PackageReference Include="WebMarkupMin.AspNetCoreLatest" Version="2.20.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\css\" />
+    <Folder Include="wwwroot\uploads\lectures\" />
+  </ItemGroup>
+
+  <!-- Vue/Vite frontend build -->
+  <ItemGroup>
+    <Content Remove="package.json" />
+    <Content Remove="package-lock.json" />
+    <Content Remove="vite.config.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <JsSources Include="src\**\*.js;src\**\*.ts;src\**\*.vue;package.json;vite.config.js" />
+  </ItemGroup>
+
+  <Target Name="NpmInstall" BeforeTargets="NpmBuild" Condition="!Exists('node_modules')">
+    <Exec Command="npm ci" />
+  </Target>
+
+  <Target Name="NpmBuild" BeforeTargets="Build" Inputs="@(JsSources)" Outputs="obj\vite\.build-sentinel">
+    <Exec Command="npm run build" />
+    <MakeDir Directories="obj\vite" />
+    <Touch Files="obj\vite\.build-sentinel" AlwaysCreate="true" />
+  </Target>
+
+</Project>

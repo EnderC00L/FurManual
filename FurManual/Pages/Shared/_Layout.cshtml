@@ -1,0 +1,267 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <link rel="icon" type="image/x-icon" href="~/Res/Ico/brpk.ico" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Электронное пособие</title>
+    <link rel="stylesheet" href="~/css/site.min.css" asp-append-version="true" />
+
+    <style>
+        /* Панель разработчика */
+        .dev-lair-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: #1e1e24;
+            color: #e0e0e0;
+            z-index: 9999;
+            box-shadow: -5px 0 20px rgba(0,0,0,0.7);
+            transition: right 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+            overflow-y: auto;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            border-left: 3px solid #7289da;
+        }
+
+            .dev-lair-panel.active {
+                right: 0;
+            }
+
+        .dev-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+
+        .dev-title {
+            font-family: 'Courier New', monospace;
+            font-size: 1.5rem;
+            color: #7289da;
+            margin: 0;
+        }
+
+        .dev-close {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+            .dev-close:hover {
+                color: #fff;
+            }
+
+        /* Контент */
+        .dev-content img {
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #333;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .dev-content p {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        .dev-lair-panel.active .dev-content {
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @@keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Адаптив для мобильных */
+        @@media (max-width: 450px) {
+            .dev-lair-panel {
+                width: 100%;
+                right: -100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Шапка -->
+    <header class="top-header">
+        <div class="header-content">
+
+            <div class="brand-wrapper">
+                <button class="mobile-menu-toggle" id="menuToggle" aria-label="Открыть меню">
+                    <svg class="burger-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 6h18M3 12h18M3 18h18"
+                              stroke="currentColor"
+                              stroke-width="2.5"
+                              stroke-linecap="round"
+                              stroke-linejoin="round" />
+                    </svg>
+                </button>
+
+                <a href="/" class="site-title-link">
+                    <div class="logo-container">
+                        <img src="~/Res/SVG/Brpk-logo.svg" alt="Логотип" class="header-logo-img" />
+                    </div>
+                    <h1 class="site-title">Электронное пособие</h1>
+                </a>
+
+                <div class="desktop-divider"></div>
+            </div>
+
+            <div class="mobile-divider"></div>
+
+            <nav class="top-nav">
+                <a asp-page="/Lectures" class="nav-link">Лекции</a>
+                <a asp-page="/PracticalWorks" class="nav-link">Практические работы</a>
+                <a asp-page="/Tests/Index" class="nav-link">Тесты</a>
+                <a asp-page="/Cisco" class="nav-link">Конструктор Cisco</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Боковое меню слева -->
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Навигация</h3>
+                    <ul class="sidebar-menu">
+                        <li>
+                            <a asp-page="/Index" class="sidebar-link">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                </svg>
+                                Главная
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-page="/Lectures" class="sidebar-link">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                                </svg>
+                                Лекции
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-page="/PracticalWorks" class="sidebar-link">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"></path>
+                                </svg>
+                                Практические работы
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-page="/Tests/Index" class="sidebar-link">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M9 11l3 3L22 4"></path>
+                                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                                </svg>
+                                Тесты
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-page="/Cisco" class="sidebar-link">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <rect x="3" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="14" width="7" height="7"></rect>
+                                    <rect x="3" y="14" width="7" height="7"></rect>
+                                </svg>
+                                Конструктор Cisco
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+
+                <div class="sidebar-section mt-auto">
+                    <h3 class="sidebar-title" id="adminTrigger" style="cursor: pointer; user-select: none;">Администраторам</h3>
+                    <ul class="sidebar-menu">
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <li>
+                                <div class="sidebar-link" style="cursor: default;">
+                                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                    @User.Identity.Name
+                                </div>
+                            </li>
+                            <li>
+                                <form asp-page="/Logout" method="post">
+                                    <button type="submit" class="sidebar-link w-100 text-left" style="border: none; background: none; cursor: pointer;">
+                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                            <polyline points="16 17 21 12 16 7"></polyline>
+                                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                                        </svg>
+                                        Выйти
+                                    </button>
+                                </form>
+                            </li>
+                        }
+                        else
+                        {
+                            <li>
+                                <div id="authPanel"></div>
+                                @Html.AntiForgeryToken()
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Основной контент -->
+        <main class="content">
+            <div class="bg-logo" aria-hidden="true"></div>
+            @RenderBody()
+        </main>
+    </div>
+
+    <div id="devLair" class="dev-lair-panel">
+        <div class="dev-header">
+            <h2 class="dev-title">Логово разработчика</h2>
+            <button class="dev-close" id="devLairClose" type="button">&times;</button>
+        </div>
+        <div class="dev-content">
+            <img src="~/Res/Helpers/OverNight.png" alt="OverNight - EnderCool's Fursona" />
+
+            <p>Поздравляю, вы нашли тайное, отведенное под разработчика местечко. Здесь вы немного обо мне узнаете.</p>
+
+            <p>Меня зовут <strong>EnderCool</strong>. Персонаж в заголовке - <strong>OverNight</strong> - мой собственный персонаж, и на начало 2026 года является моей единственной фурсоной.</p>
+
+            <p>Вы этого не видите, но он бороздит по просторам кибернетического пространства вокруг этого сайта для его защиты от плохишей.</p>
+
+            <p>Подробнее о нем можно узнать на другом источнике, но его я здесь не оставлю. Кто ищет - тот всегда найдет :3</p>
+        </div>
+    </div>
+
+    <script type="module" src="~/js/dist/sidebar-active.js" asp-append-version="true"></script>
+    <script type="module" src="~/js/dist/auth-panel.js" asp-append-version="true"></script>
+    <script type="module" src="~/js/dist/layout-controls.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

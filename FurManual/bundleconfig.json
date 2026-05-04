@@ -1,0 +1,12 @@
+[
+  {
+    "outputFileName": "wwwroot/css/site.min.css",
+    "inputFiles": [
+      "Styles/site.css"
+    ],
+    "minify": {
+      "enabled": true,
+      "commentMode": "none"
+    }
+  }
+]

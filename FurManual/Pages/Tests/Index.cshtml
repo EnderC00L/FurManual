@@ -1,0 +1,238 @@
+﻿@page
+@model FurManual.Pages.Tests.IndexModel
+@{
+    ViewData["Title"] = "Тесты";
+}
+
+<style>
+    .tests-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding-bottom: 3rem;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 2rem;
+        color: var(--text-primary);
+    }
+
+    .tests-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .test-card {
+        background: var(--bg-secondary);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid rgba(0,0,0,0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 200px;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .test-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        }
+
+        /* --- СТАТУСЫ ТЕСТОВ --- */
+        .test-card.status-green {
+            border: 2px solid #22c55e;
+            background: #f0fdf4;
+        }
+
+            .test-card.status-green .result-badge {
+                background: #22c55e;
+            }
+
+            .test-card.status-green .record-label {
+                color: #15803d;
+            }
+
+        .test-card.status-yellow {
+            border: 2px solid #eab308;
+            background: #fefce8;
+        }
+
+            .test-card.status-yellow .result-badge {
+                background: #eab308;
+                color: #422006;
+            }
+
+            .test-card.status-yellow .record-label {
+                color: #a16207;
+            }
+
+        .test-card.status-red {
+            border: 2px solid #ef4444;
+            background: #fef2f2;
+        }
+
+            .test-card.status-red .result-badge {
+                background: #ef4444;
+            }
+
+            .test-card.status-red .record-label {
+                color: #b91c1c;
+            }
+
+
+    /* Бейдж результата */
+    .result-badge {
+        position: absolute;
+        top: 0;
+        right: 0;
+        color: white;
+        padding: 0.4rem 0.8rem;
+        border-bottom-left-radius: 12px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        box-shadow: -2px 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .test-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0 0 0.5rem 0;
+        color: var(--text-primary);
+        padding-right: 2rem;
+    }
+
+    .test-desc {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        margin-bottom: 1.5rem;
+        flex-grow: 1;
+        line-height: 1.5;
+    }
+
+    .test-meta {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+    }
+
+    .btn-start {
+        background: var(--accent-primary);
+        color: white;
+        text-decoration: none;
+        padding: 0.8rem;
+        border-radius: 10px;
+        text-align: center;
+        font-weight: 600;
+        transition: opacity 0.2s;
+        display: block;
+    }
+
+        .btn-start:hover {
+            opacity: 0.9;
+            color: white;
+        }
+
+    /* Пагинация */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 3rem;
+    }
+
+    .page-btn {
+        min-width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        text-decoration: none;
+        border: 1px solid rgba(0,0,0,0.1);
+        transition: all 0.2s;
+        font-weight: 500;
+    }
+
+        .page-btn:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+
+        .page-btn.active {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+
+        .page-btn.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+</style>
+
+<div class="tests-container">
+    <h2 class="page-title">Проверка знаний</h2>
+
+    <div class="tests-grid">
+        @foreach (var test in Model.Tests)
+        {
+            <div class="test-card @test.StatusClass">
+
+                @if (test.IsCompleted)
+                {
+                    <div class="result-badge" title="Лучшее время: @test.BestTime">
+                        @test.BestScore%
+                    </div>
+                }
+
+                <div>
+                    <h3 class="test-title">@test.Title</h3>
+                    <p class="test-desc">@(test.Description ?? "Описание отсутствует")</p>
+                </div>
+
+                <div>
+                    <div class="test-meta">
+                        <span>Вопросов: @test.QuestionsCount</span>
+
+                        @if (test.IsCompleted)
+                        {
+                            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(0,0,0,0.1);">
+                                <div class="record-label" style="font-size: 0.8rem; font-weight: 600;">
+                                    ⚡ Рекорд: @test.BestTime
+                                </div>
+
+                                @if (!string.IsNullOrEmpty(test.StudentName))
+                                {
+                                    <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">
+                                        👤 @test.StudentName
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <a asp-page="./Run" asp-route-id="@test.Id" class="btn-start">
+                        @(test.IsCompleted ? "Пройти снова" : "Начать тест")
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (Model.TotalPages > 1)
+    {
+        <div class="pagination">
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <a href="?CurrentPage=@i" class="page-btn @(i == Model.CurrentPage ? "active" : "")">@i</a>
+            }
+        </div>
+    }
+</div>

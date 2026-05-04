@@ -1,0 +1,183 @@
+@model FurManual.Pages.LecturesModel
+<div class="lectures-grid">
+    @if (Model.Lectures != null && Model.Lectures.Any())
+    {
+        @foreach (var item in Model.Lectures)
+        {
+            var extension = System.IO.Path.GetExtension(item.FilePath ?? "").ToLower();
+            var iconPath = "/Res/SVG/Pdf.svg";
+            if (extension == ".doc" || extension == ".docx") { iconPath = "/Res/SVG/Word.svg"; }
+            else if (extension == ".pdf") { iconPath = "/Res/SVG/Pdf.svg"; }
+
+            <div class="lecture-card">
+                <img src="@iconPath" alt="@extension" class="file-icon-img" onerror="this.style.display='none'" />
+
+                <div class="lecture-content">
+                    <h4 class="lecture-title">@item.Title</h4>
+                    <div class="lecture-meta">
+                        @if (item.CreatedBy != null)
+                        {
+                            <span class="meta-item">
+                                <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                <strong>Автор:</strong> @item.CreatedBy.FullName
+                            </span>
+                        }
+                        <span class="meta-item">
+                            <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            <strong>Дата:</strong> @item.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")
+                        </span>
+
+                        @if (item.UpdatedAt.HasValue)
+                        {
+                            <details class="meta-details">
+                                <summary class="meta-summary meta-item" title="Показать историю изменений">
+                                    <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                                    </svg>
+                                    <strong>История изменений</strong>
+
+                                    <svg class="meta-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                    </svg>
+                                </summary>
+
+                                <div class="meta-details-content">
+                                    <span class="meta-item">
+                                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                                        </svg>
+                                        <strong>Время:</strong> @item.UpdatedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                    </span>
+
+                                    @if (item.UpdatedBy != null)
+                                    {
+                                        <span class="meta-item">
+                                            <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                                <circle cx="12" cy="7" r="4"></circle>
+                                            </svg>
+                                            <strong>Кем:</strong> @item.UpdatedBy.FullName
+                                        </span>
+                                    }
+                                </div>
+                            </details>
+                        }
+                    </div>
+                </div>
+
+                <div class="card-actions">
+
+                    <!-- 1. ПРЕДПРОСМОТР -->
+                    @if (extension == ".pdf")
+                    {
+                        <a href="@item.FilePath" target="_blank" class="action-btn preview" title="Предпросмотр">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </a>
+                    }
+
+                    <!-- 2. КОПИРОВАТЬ ССЫЛКУ -->
+                    <button type="button" class="action-btn copy-link"
+                            data-lecture-action="copy"
+                            data-lecture-id="@item.Id"
+                            title="Копировать ссылку на скачивание">
+
+                        <svg class="icon-default" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                        </svg>
+
+                        <svg class="icon-success" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </button>
+
+                    <!-- 3. СКАЧАТЬ -->
+                    <a asp-page-handler="Download" asp-route-id="@item.Id" class="action-btn download" title="Скачать">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                        </svg>
+                    </a>
+
+                    <!-- 4. РЕДАКТИРОВАТЬ -->
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <button type="button" class="action-btn edit" title="Редактировать"
+                                data-lecture-action="edit"
+                                data-lecture-id="@item.Id"
+                                data-lecture-title="@item.Title">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </button>
+                    }
+
+                    <!-- 5. УДАЛИТЬ -->
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <form method="post" asp-page-handler="Delete" asp-route-id="@item.Id" onsubmit="return confirm('Удалить эту лекцию?');">
+                            <button type="submit" class="action-btn delete" title="Удалить">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                </svg>
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="empty-state">
+            <img src="/Res/SVG/Sad.svg" alt="Not found" class="empty-state-img" />
+            <p>По вашему запросу ничего не найдено.</p>
+        </div>
+    }
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <div class="pagination">
+        <a href="#" data-lecture-action="page" data-page="@(Model.CurrentPage - 1)"
+           class="page-btn @(Model.CurrentPage <= 1 ? "disabled" : "")">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+        </a>
+        @for (int i = 1; i <= Model.TotalPages; i++)
+        {
+            if (i == 1 || i == Model.TotalPages || (i >= Model.CurrentPage - 2 && i <= Model.CurrentPage + 2))
+            {
+                <a href="#" data-lecture-action="page" data-page="@i"
+                   class="page-btn @(i == Model.CurrentPage ? "active" : "")">
+                    @i
+                </a>
+            }
+            else if (i == Model.CurrentPage - 3 || i == Model.CurrentPage + 3)
+            {
+                <span class="page-btn disabled">...</span>
+            }
+        }
+        <a href="#" data-lecture-action="page" data-page="@(Model.CurrentPage + 1)"
+           class="page-btn @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+        </a>
+    </div>
+}

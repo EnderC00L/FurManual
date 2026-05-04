@@ -1,0 +1,512 @@
+﻿@page "{id:int}"
+@model FurManual.Pages.Tests.RunModel
+@{
+    ViewData["Title"] = Model.Test?.Title;
+
+    string statusClass = "status-red";
+    string statusText = "Нужно подтянуть знания";
+    if (Model.Percentage >= 80) { statusClass = "status-green"; statusText = "Отличный результат!"; }
+    else if (Model.Percentage >= 50) { statusClass = "status-yellow"; statusText = "Хороший результат"; }
+}
+
+<style>
+    .answer-checkbox {
+        appearance: none;
+        width: 22px;
+        height: 22px;
+        border: 2px solid #cbd5e1;
+        border-radius: 6px;
+        margin-right: 1rem;
+        position: relative;
+        flex-shrink: 0;
+        transition: all 0.2s;
+    }
+
+        .answer-checkbox:checked {
+            border-color: var(--accent-primary);
+            background: var(--accent-primary);
+        }
+
+            .answer-checkbox:checked::after {
+                content: '';
+                position: absolute;
+                width: 6px;
+                height: 12px;
+                border: solid white;
+                border-width: 0 2px 2px 0;
+                top: 45%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotate(45deg);
+            }
+
+    .q-badge {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: 4px;
+        font-weight: 600;
+        margin-left: 0.5rem;
+        vertical-align: middle;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+        .q-badge.multi {
+            background: #e0e7ff;
+            color: #4338ca;
+        }
+
+        .q-badge.single {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+    .run-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding-bottom: 4rem;
+        position: relative;
+    }
+
+    .test-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .btn-exit {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: white;
+        border: 1px solid #e2e8f0;
+        padding: 0.6rem 1rem;
+        border-radius: 50px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+        .btn-exit:hover {
+            background: #fef2f2;
+            color: #dc2626;
+            border-color: #fca5a5;
+        }
+
+    .sticky-timer {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(8px);
+        padding: 0.6rem 1.2rem;
+        border-radius: 50px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--accent-primary);
+        border: 1px solid rgba(102, 126, 234, 0.2);
+    }
+
+    .test-header {
+        margin-bottom: 2rem;
+        background: white;
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    }
+
+    .question-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        border: 1px solid #f1f5f9;
+    }
+
+    .question-text {
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: var(--text-primary);
+    }
+
+    .answers-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
+    .answer-label {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .answer-label:hover {
+            border-color: #cbd5e1;
+            background: #f8fafc;
+        }
+
+    .answer-radio {
+        appearance: none;
+        width: 22px;
+        height: 22px;
+        border: 2px solid #cbd5e1;
+        border-radius: 50%;
+        margin-right: 1rem;
+        position: relative;
+        flex-shrink: 0;
+    }
+
+        .answer-radio:checked {
+            border-color: var(--accent-primary);
+        }
+
+            .answer-radio:checked::after {
+                content: '';
+                position: absolute;
+                width: 10px;
+                height: 10px;
+                background: var(--accent-primary);
+                border-radius: 50%;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            }
+
+    .answer-label:has(input:checked) {
+        border-color: var(--accent-primary);
+        background: #eff6ff;
+    }
+
+    .btn-submit {
+        display: block;
+        width: 100%;
+        padding: 1.2rem;
+        background: var(--accent-primary);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 2rem;
+        transition: opacity 0.2s;
+    }
+
+    .result-card {
+        background: white;
+        padding: 0;
+        border-radius: 20px;
+        text-align: center;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .result-header {
+        padding: 3rem 2rem;
+    }
+
+    .status-green .result-header {
+        background: #f0fdf4;
+        border-bottom: 1px solid #bbf7d0;
+    }
+
+    .status-green .score-circle {
+        border-color: #22c55e;
+        color: #16a34a;
+        background: white;
+    }
+
+    .status-green .status-title {
+        color: #15803d;
+    }
+
+    .status-yellow .result-header {
+        background: #fefce8;
+        border-bottom: 1px solid #fde047;
+    }
+
+    .status-yellow .score-circle {
+        border-color: #eab308;
+        color: #ca8a04;
+        background: white;
+    }
+
+    .status-yellow .status-title {
+        color: #a16207;
+    }
+
+    .status-red .result-header {
+        background: #fef2f2;
+        border-bottom: 1px solid #fecaca;
+    }
+
+    .status-red .score-circle {
+        border-color: #ef4444;
+        color: #dc2626;
+        background: white;
+    }
+
+    .status-red .status-title {
+        color: #b91c1c;
+    }
+
+    .score-circle {
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        font-weight: 800;
+        margin: 0 auto 1.5rem auto;
+        border-width: 6px;
+        border-style: solid;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    .status-title {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+    }
+
+    .result-stats {
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+        opacity: 0.8;
+    }
+
+    .report-section {
+        padding: 2rem;
+        background: white;
+    }
+
+    .input-wrapper {
+        position: relative;
+        max-width: 400px;
+        margin: 0 auto 2rem auto;
+    }
+
+    .fio-input {
+        width: 100%;
+        padding: 1rem 1rem 1rem 3rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.2s;
+        outline: none;
+    }
+
+        .fio-input:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .fio-input.error {
+            border-color: #ef4444;
+        }
+
+    .input-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+        pointer-events: none;
+    }
+
+    .error-msg {
+        color: #ef4444;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        display: none;
+        text-align: left;
+        padding-left: 0.5rem;
+    }
+
+    .report-details {
+        max-width: 500px;
+        margin: 0 auto;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        overflow: hidden;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: all 0.3s ease;
+        visibility: hidden;
+        height: 0;
+    }
+
+        .report-details.visible {
+            opacity: 1;
+            transform: translateY(0);
+            visibility: visible;
+            height: auto;
+            margin-bottom: 2rem;
+        }
+
+    .report-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.95rem;
+    }
+
+        .report-row:last-child {
+            border-bottom: none;
+            background: #f8fafc;
+            font-weight: 600;
+        }
+
+    .report-label {
+        color: var(--text-secondary);
+    }
+
+    .report-value {
+        color: var(--text-primary);
+        font-weight: 500;
+        text-align: right;
+    }
+
+    .result-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .btn-back {
+        padding: 0.8rem 1.5rem;
+        background: #f1f5f9;
+        color: var(--text-primary);
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: 0.2s;
+    }
+
+        .btn-back:hover {
+            background: #e2e8f0;
+        }
+</style>
+
+<div class="run-container">
+    @if (!Model.IsFinished)
+    {
+        <!-- Навигация -->
+        <div class="test-nav">
+            <a asp-page="./Index" class="btn-exit" onclick="return confirm('Вы действительно хотите выйти? Прогресс будет потерян.')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+                Выйти
+            </a>
+            <div class="sticky-timer">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span id="testTimer">00:00</span>
+            </div>
+            <div style="width: 80px;"></div>
+        </div>
+
+        <div class="test-header">
+            <h2 style="margin: 0 0 0.5rem 0;">@Model.Test.Title</h2>
+            <p style="color: var(--text-secondary); margin: 0;">@Model.Test.Description</p>
+        </div>
+
+        <form method="post" id="testForm">
+            <input type="hidden" asp-for="StartTicks" />
+
+            @for (int i = 0; i < Model.Test.Questions.Count; i++)
+            {
+                var q = Model.Test.Questions[i];
+                <div class="question-card">
+                    <div class="question-text">
+                        @(i + 1). @q.Text
+                        @if (q.IsMultipleChoice)
+                        {
+                            <span class="q-badge multi">Несколько вариантов</span>
+                        }
+                        else
+                        {
+                            <span class="q-badge single">Один вариант</span>
+                        }
+                    </div>
+
+                    <div class="answers-list">
+                        @foreach (var ans in q.Answers)
+                        {
+                            <label class="answer-label">
+                                @if (q.IsMultipleChoice)
+                                {
+                                    <!-- МНОЖЕСТВЕННЫЙ ВЫБОР -->
+                                    <input type="checkbox"
+                                           name="Question_@q.Id"
+                                           value="@ans.Id"
+                                           class="answer-checkbox" />
+                                }
+                                else
+                                {
+                                    <!-- ОДИНОЧНЫЙ ВЫБОР -->
+                                    <input type="radio"
+                                           name="Question_@q.Id"
+                                           value="@ans.Id"
+                                           class="answer-radio"
+                                           required />
+                                }
+                                <span>@ans.Text</span>
+                            </label>
+                        }
+                    </div>
+                </div>
+            }
+
+            <button type="submit" class="btn-submit">Завершить тестирование</button>
+        </form>
+
+    }
+    else
+    {
+        <!-- ЭКРАН РЕЗУЛЬТАТОВ -->
+        <div class="result-card @statusClass">
+            <div class="result-header">
+                <div class="score-circle">@Model.Percentage%</div>
+                <div class="status-title">@statusText</div>
+                <div class="result-stats">
+                    Правильно: <strong>@Model.CorrectCount</strong> из <strong>@Model.Test.Questions.Count</strong>
+                    &nbsp;•&nbsp;
+                    Время: <strong>@Model.FormattedTime</strong>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <div id="studentNameInput"
+                     data-test-title="@Model.Test.Title"
+                     data-test-date="@DateTime.Now.ToString("dd.MM.yyyy")"
+                     data-score="@Model.CorrectCount / @Model.Test.Questions.Count"></div>
+
+                <div class="result-actions">
+                    <a asp-page="./Index" class="btn-back">← К списку тестов</a>
+                    <a asp-page="./Run" asp-route-id="@Model.Test.Id" class="btn-back" style="background: var(--accent-primary); color: white;">Пройти заново</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script type="module" src="~/js/dist/test-runner.js" asp-append-version="true"></script>
+}
