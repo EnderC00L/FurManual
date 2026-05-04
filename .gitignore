@@ -6,8 +6,9 @@ obj/
 # Зависимости Node.js
 node_modules/
 
-# Конфигурации с секретами (Твой запрос)
+# Конфигурации с секретами
 appsettings.json
+appsettings.Development.json
 
 # Файлы пользователя
 *.user
